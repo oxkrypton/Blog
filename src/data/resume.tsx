@@ -66,7 +66,15 @@ export const DATA = {
 
   work: [
     {
-      company:"Hasn't worked before",
+      company: "Hasn't worked before",
+      href: "",
+      badges: [],
+      location: "",
+      title: "",
+      logoUrl: "",
+      start: "",
+      end: "",
+      description: "",
     }
     // {
     //   company: "Nvidia",
