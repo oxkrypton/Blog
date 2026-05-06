@@ -1,7 +1,7 @@
 import type { SVGProps } from "react";
 
 const Postgresql = (props: SVGProps<SVGSVGElement>) => (
-  <svg {...props} xmlSpace="preserve" viewBox="0 0 432.071 445.383">
+  <svg {...props} xmlSpace="preserve" viewBox="-6.656 0 445.383 445.383">
     <g
       style={{
         fillRule: "nonzero",
