@@ -10,7 +10,7 @@ import {Git} from "@/components/ui/svgs/git";
 
 export const DATA = {
   name: "Ronyu 👋",
-  initials: "DV",
+  initials: "RY",
   url: "https://ronyu.me",
   description:
     "Student dev | Open-source builder |\nFocusing on Crypto",
@@ -56,7 +56,7 @@ export const DATA = {
       },
       email: {
         name: "Send Email",
-        url: "#",
+        url: "job@ronyu.me",
         icon: Icons.email,
 
         navbar: false,
@@ -101,37 +101,36 @@ export const DATA = {
   ],
   projects: [
     {
-      title: "llm.report",
-      href: "https://llm.report",
-      dates: "April 2023 - September 2023",
+      title: "Walottery",
+      href: "https://walottery.wal",
+      dates: "April 2025 - September 2025",
       active: true,
-      description:
-        "Developed an open-source logging and analytics platform for OpenAI: Log your ChatGPT API requests, analyze costs, and improve your prompts.",
+      description:"一个链上实物抽奖平台, 到期随机开奖, 使用 Seal 链上加密技术加密中奖者信息, 只有创建方可以解密查看信息",
       technologies: [
-        "Next.js",
+        "React",
         "Typescript",
-        "PostgreSQL",
-        "Prisma",
         "TailwindCSS",
         "Shadcn UI",
-        "Magic UI",
-        "Stripe",
+        "Move",
+        "Sui SDK",
+        "Seal",
+        "Supabase",
         "Cloudflare Workers",
       ],
       links: [
         {
-          type: "Website",
-          href: "https://llm.report",
-          icon: <Icons.globe className="size-3" />,
+          type: "Video",
+          href: "https://www.youtube.com/watch?v=qJXAJVqg4w0&t=2s",
+          icon: <Icons.youtube className="size-3" />,
         },
         {
           type: "Source",
-          href: "https://github.com/dillionverma/llm.report",
+          href: "https://github.com/oxkrypton/walottery",
           icon: <Icons.github className="size-3" />,
         },
       ],
-      image: "",
-      video: "https://cdn.llm.report/openai-demo.mp4",
+      image: "/walottery.png",
+      video: "",
     },
   ],
   hackathons: [
