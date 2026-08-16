@@ -67,7 +67,7 @@ export const DATA = {
   work: [
     {
       company: "亿数资产",
-      href: "https://www.yishuzichan.cn/",
+      href: "https://www.yishuzichan.cn",
       badges: [],
       location: "浙江杭州",
       title: "后端数据支持工程师",
