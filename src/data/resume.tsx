@@ -15,7 +15,7 @@ export const DATA = {
   description:
     "Student dev | Open-source builder |\nFocusing on Crypto",
   summary:
-    "nothing",
+    "I like building backend systems and cloud-native tools, and I'm currently learning Kubernetes. I'm also into open source, crypto, and investing.",
   avatarUrl: "/me.png",
   skills: [
     { name: "Go", icon: Golang },
@@ -66,32 +66,21 @@ export const DATA = {
 
   work: [
     {
-      company: "Hasn't worked before",
-      href: "",
+      company: "亿数资产",
+      href: "https://www.yishuzichan.cn/",
       badges: [],
-      location: "",
-      title: "",
-      logoUrl: "",
-      start: "",
-      end: "",
-      description: "",
-    }
-    // {
-    //   company: "Nvidia",
-    //   href: "https://nvidia.com/",
-    //   badges: [],
-    //   location: "Santa Clara, CA",
-    //   title: "Software Engineer",
-    //   logoUrl: "/nvidia.png",
-    //   start: "January 2020",
-    //   end: "April 2020",
-    //   description:
-    //     "Architected and wrote the entire MVP of the GeForce Now Cloud Gaming internal admin and A/B testing dashboard using React, Redux, TypeScript, and Python.",
-    // },
+      location: "浙江杭州",
+      title: "后端数据支持工程师",
+      logoUrl: "/company-yishu.png",
+      start: "July 2026",
+      end: "Now",
+      description:
+        "负责数字产品交易平台的后台管理与数据支持体系建设，平台日均交易量达百万级。参与后台管理功能开发，支撑商品配置、订单查询、交易审核等日常运营流程；搭建运营数据统计与分析能力，帮助运营团队及时掌握交易趋势和业务表现，为定价策略、活动运营和风险识别提供数据参考。",
+    },
   ],
   education: [
     {
-      school: "Nanchang Jiaotong institude",
+      school: "Nanchang Jiaotong Institute",
       href: "https://www.ncjti.edu.cn",
       degree: "Bachelor's Degree of Computer Science (BCS)",
       logoUrl: "/ncjti.png",
