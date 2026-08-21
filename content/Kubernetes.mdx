@@ -23,7 +23,8 @@ summary: "记录学习云原生的笔记"
 
 查看节点状态
 ``` shell
-kubectl get node```
+kubectl get node
+```
 
 ### 大致工作流程
 
@@ -34,8 +35,11 @@ kubectl get node```
 
 ## YAML
 ```shell
-kubectl run ngx -image=nginx:alpine --dry-run=client -o yaml```
+kubectl run ngx -image=nginx:alpine --dry-run=client -o yaml
+```
+
 会生成一个绝对正确的yaml, 然后就可以进行更进一步的定制
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -51,7 +55,8 @@ spec:
     resources: {}
   dnsPolicy: ClusterFirst
   restartPolicy: Always
-status: {}```
+status: {}
+```
 
 # Docker
 
