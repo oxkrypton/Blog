@@ -1,0 +1,159 @@
+---
+title: "Kubernetes学习笔记(持续更新中~)"
+publishedAt: "2026-08-17"
+updatedAt: "2026-08-21"
+author: "Ronyu Kuang"
+summary: "记录学习云原生的笔记"
+---
+
+# K8S
+
+## 基本架构
+
+控制面的节点 Master Node:
+- apiservice :是整个k8s和master节点的唯一入口, 公开了一系列restful api, 所有组件只能和他通行
+- etcd: 高可用的分布式KV数据库, 用来持久化存储系统里的各种资源对象和状态
+- scheduler: 负责容器的编排工作, 检查节点的资源状态, 把Pod调度到最适合的节点上运行
+- controller-manager: 负责维护容器和节点等资源状态, 实现故障检测、服务迁移、应用伸缩等功能，相当于监控运维
+
+数据面的节点 Worker / Node:
+- kubelet: 是Worker的代理, 负责管理worker的大部分操作. Node上只有它能够与apiserver通信，实现状态报告、命令下发、启停容器等功能
+- kube-proxy: 是node的网络代理, 只负责管理容器的网络通信
+- container-runtime: 容器和镜像的实际使用者，在kubelet的指挥下创建容器，管理Pod的生命周期
+
+查看节点状态
+``` shell
+kubectl get node
+```
+
+### 大致工作流程
+
+- Node上的kubelet定期向apiservice上报节点状态, apiservice存到etcd
+- node上的kube-proxy实现了tcp/udp, 让容器对外提供服务
+- scheduler通过apiserver得到当前的节点状态，调度Pod，然后apiserver下发命令给某个Node的kubelet，kubelet调用container-runtime启动容器。
+- controller-manager也通过apiserver得到实时的节点状态，监控可能的异常情况，再使用相应的手段去调节恢复。
+
+## YAML
+```shell
+kubectl run ngx -image=nginx:alpine --dry-run=client -o yaml
+```
+会生成一个绝对正确的yaml, 然后就可以进行更进一步的定制
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: ngx
+  name: ngx
+spec:
+  containers:
+  - image: nginx:alpine
+    name: ngx
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+```
+
+# Docker
+
+## 容器基础
+
+**容器本质上就是一个被 Linux Namespace 隔离了视图、被 Cgroups 限制了资源、基于联合文件系统（rootfs）运行的普通宿主机进程。** 
+所谓的“进入容器”或“容器间互通”，底层均是对内核 Namespace 归属的动态调整与共享
+
+### 底层核心
+
+- **Namespace（命名空间）**
+    - **含义：** Linux 内核提供的资源隔离机制。
+    - **作用：** 为进程制造“障眼法”，让进程误以为自己独占了系统的某种全局资源（如进程 PID、网络栈、挂载点等）。
+        
+- **Cgroups（Control Groups，控制组）**
+    - **含义：** Linux 内核提供的物理资源配额与度量机制。
+    - **作用：** 给进程的资源使用画“边界”，限制其能够占用的 CPU 算力、内存大小、磁盘 I/O 和网络带宽等，防止单个容器吃光宿主机资源。
+        
+- **Mount Namespace（挂载命名空间）**
+    - **含义：** Linux 实现的第一个 Namespace 类型（标志位为 `CLONE_NEWNS`）。
+    - **作用：** 隔离进程看到的**文件系统挂载点列表**。在当前 Mount Namespace 内执行的 `mount` 或 `umount` 操作，仅在该命名空间内部可见，不会影响宿主机及其他命名空间。
+
+### 目录切换的系统调用/命令
+
+- **`chroot`（Change Root）**
+    - **含义：** Linux 传统的系统调用与命令行工具，意为“改变根目录”。
+    - **作用：** 将某个指定目录（例如 `$HOME/test`）设定为当前进程及其子进程的虚拟根目录 `/`。进程在此环境下无法通过 `cd ..` 访问到指定目录之外的文件。
+        
+- **`pivot_root` 系统调用**
+    - **含义：** 比 `chroot` 更现代、更安全的系统调用。
+    - **作用：** 直接将整个系统的当前根文件系统（old root）替换为一个新的根文件系统（new root），并将旧根挂载到新根下的某个子目录以便后续卸载。**Docker 底层优先使用 `pivot_root`。**
+
+### 文件系统概念
+
+- **rootfs（Root File System，根文件系统）**
+    - **含义：** 操作系统根目录 `/` 下所包含的所有标准目录和文件集合（如 `/bin`、`/etc`、`/proc`、`/lib` 等）。
+    - **特点：** 它**只包含操作系统的文件与配置（躯壳），不包含 Linux 内核（灵魂）**。容器运行时挂载在根目录上的就是 rootfs，它也是“容器镜像”的物理本质。
+        
+- **UnionFS（Union File System，联合文件系统）**
+    - **含义：** 一种为 Linux 设计的分层、轻量级的高性能文件系统。一类技术的统称（也是早期Docker的一个具体实现）
+    - **作用：** 支持将不同物理路径下的多个目录内容“联合挂载（Union Mount）”到同一个挂载点下，呈现为一个统一合并后的目录视图。
+
+- **AuFS（Advanced UnionFS）**
+	- **含义：** 早期 Docker 在 Ubuntu 等系统上广泛使用的一种 UnionFS 具体实现。    
+	- **作用：** 实现了按层叠加、文件合并以及“写时复制（Copy-on-Write）”功能。
+	- **当前主流:** overlay2.  基于 Linux 内核原生的 OverlayFS, 无需额外打内核补丁，性能损耗更低、内存与 inode 利用更高效。
+
+- **tmpfs（内存文件系统）**
+    - **含义：** Linux 下基于 RAM（内存）创建的文件系统。
+    - **作用：** 读写速度极快，但数据具有易失性（断电或重启即丢失）。文中用它做了一个干净、独立的临时 `/tmp` 目录挂载示例。
+
+### Docker的三层结构
+
+#### 核心设计思想：从“全量复制”到“增量分层”
+
+- **痛点**：传统模式下，每次软件修改都要保存一份完整的 rootfs（几百 MB 到几 GB），导致存储极度浪费、版本碎片化。
+- **解法**：像 Git 一样只记录增量。每一层（Layer）只保存相比上一层发生变化的文件。
+- **技术支撑**：**UnionFS（联合文件系统）**，它能将多个不同物理目录“重叠挂载”到同一个目录下，合成一个统一的文件树视图。
+
+#### 容器 rootfs 的三层架结构
+
+当一个容器运行起来时，AuFS 会把 `/var/lib/docker/aufs/diff/` 下的各个物理目录，联合挂载到 `/var/lib/docker/aufs/mnt/<container-id>` 统一挂载点。整个文件系统从下到上由三部分组成：
+
+| **层级名称**                    | **位置与挂载权**             | **内容与作用**                                                           | **对 docker commit 的影响**               |
+| --------------------------- | ---------------------- | ------------------------------------------------------------------- | ------------------------------------- |
+| **可读写层 (Read-Write Layer)** | 最顶层<br>`rw`(可读写)       | 存放容器运行期间**所有的增、删、改**。初始为空。                                          | **会被提交**：通过 `commit` 可将其固化为一个新的只读镜像层。 |
+| **Init 层 (`*-init` Layer)** | 中间夹层<br>`ro+wh`(只读+白障) | 存放与当前容器实例强绑定的网络/主机配置（如 `/etc/hosts`、`/etc/resolv.conf`、`hostname`）。 | **不会被提交**：专门隔离出来，避免容器专属的临时配置污染新镜像。    |
+| **只读层 (Read-Only Layers)**  | 底部所有层<br>`ro+wh`       | 镜像的基础层（如纯净 Ubuntu 的 5 个基础层）。由所有从该镜像启动的容器共享。                         | **完全不受影响**：多容器共用底包，节省巨量磁盘空间。          |
+
+#### 核心操作机制：写时复制与白障（Whiteout）
+
+只读层不可修改，那容器内发生文件改动时底层如何处理？
+- **新建文件**：直接写在最顶部的“可读写层”。
+- **修改只读文件（Copy-on-Write）**：把底层的旧文件先复制一份到“可读写层”，然后在可读写层上修改，上层文件会遮挡下层同名文件。
+- **删除只读文件（Whiteout / 白障）**：
+    - 底层文件是只读的，无法真删。
+    - **机制**：AuFS 在顶部的“可读写层”创建一个带前缀的掩码文件（例如删除 `foo` 时生成 `.wh.foo`）。
+    - **效果**：在最终联合挂载的视图里，`.wh.foo` 会把下层的 `foo` 彻底遮挡隐藏，应用感知上文件已被删除。
+
+#### 总结
+
+Docker 镜像的精髓在于 **“分层存储、联合呈现、写时复制、白障遮蔽”**：
+1. **只读层**保证了基础镜像的**不可变性与多容器共享**；
+2. **Init 层**巧妙解决了**单机专属配置与镜像提交的解耦**；
+3. **可读写层**配合 **Whiteout** 实现了**轻量级的动态修改与增量分发**。
+
+
+## Volum机制
+
+允许将宿主机上指定的目录或者文件，挂载到容器里面进行读取和修改操作。
+
+- **解决的核心矛盾**：容器 rootfs 的隔离性使容器与宿主机无法直接共享文件，且容器销毁后可读写层数据即丢失。Volume 用于实现**数据持久化**与**主机-容器数据共享**。
+
+- **声明方式与存储位置**：
+    - **Bind Mount**（`docker run -v /home:/test`）：直接将指定的宿主机绝对路径 `/home` 挂载进容器。
+- **实现时机与关键技术**：
+    1. 容器初始化进程（`dockerinit`）在开启 **Mount Namespace** 之后、执行 `chroot`（或 `pivot_root`）**之前**执行挂载。(在rootfs准备好之后, chroot执行之前, bind mount 在宿主机挂载一个Volum)
+    2. 使用 Linux **`mount --bind`（绑定挂载）**，本质上是将挂载点目录的 `dentry` 指针重定向到宿主机目录的 `inode`。
+    3. 由于挂载发生在容器的 Mount Namespace 内，该挂载点**对宿主机不可见**。(类似容器内部的一个指针指向宿主机的一个地址, 而宿主机没有这个指针, 所以宿主机不可见)
+        
+- **为何 `docker commit` 不会提交 Volume 内的数据**：
+    - `docker commit` 发生在宿主机空间，宿主机看不到容器内部的 Bind Mount 映射关系，只能看到可读写层下原本为了作为挂载点而创建的空目录 `/test`。因此，新镜像只会包含一个空的 `/test` 目录。
