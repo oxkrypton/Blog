@@ -44,7 +44,7 @@ grpc是google开源的高性能、跨语言、通用的 RPC 框架
 
 ### 工作流程
 
-定义契约 $\rightarrow$ 生成代码 $\rightarrow$ 服务端实现 $\rightarrow$ 客户端调用 
+定义契约 → 生成代码 → 服务端实现 → 客户端调用
 
 ## 为什么要用 grpc?
 
@@ -134,16 +134,15 @@ GET /user HTTP/1.1...POST /order HTTP/1.1...{"id":1}200 OK...
         - 08: 字段编号 1 与 WireType 类型
         - E9 07：数字 1001 的 Varint 编码
 3. gRPC 协议层封装: gRPC 会在 Protobuf 载荷前加上一个 固定的 5 字节前缀
-````
-+------------------+----------------------------------+
-| Compressed (1B)  |       Message Length (4B)        |
-|      0x00        |        0x00 0x00 0x00 0x03       |
-+------------------+----------------------------------+
-|          Protobuf Payload (3B: 0x08 0xE9 0x07)       |
-+-----------------------------------------------------+
-````
+| Compressed (1B) | Message Length (4B) |
+| :---: | :---: |
+| `0x00` | `0x00 0x00 0x00 0x03` |
+
+| Protobuf Payload (3B) |
+| :---: |
+| `0x08 0xE9 0x07` |
     - 第 1 字节 (0x00): 表示未启用 Gzip/Snappy 压缩
-    - 第 2~5 字节 (0x00 00 00 03) : 标记后面的 Protobuf 数据正好是 3 字节此时数据总长：$5 + 3 = 8$ 字节
+    - 第 2~5 字节 (0x00 00 00 03) : 标记后面的 Protobuf 数据正好是 3 字节, 此时数据总长：5 + 3 = 8 字节
 4. HTTP/2 分帧与封装: gRPC 将上述 8 字节数据打包进 HTTP/2 标准帧中，并分配一个新的 Stream ID = 1
     - 发送 HEADERS 帧 (建立 RPC 上下文):
         - :method: POST
@@ -166,7 +165,7 @@ GET /user HTTP/1.1...POST /order HTTP/1.1...{"id":1}200 OK...
     3. Protobuf 反序列化： 将 08 E9 07 还原为内存中的 `UserRequest{UserId: 1001}` 强类型对象。
 7. 执行业务并返回响应
     1. 服务端执行 GetUser 函数，从数据库查出用户名字 Alice。
-    2. 将 `UserResponse{Name: "Alice"}` 同样经过 Protobuf 序列化 $\rightarrow$ 加 5 字节头 $\rightarrow$ 封装为 HTTP/2 DATA 帧发回客户端。
+    2. 将 `UserResponse{Name: "Alice"}` 同样经过 Protobuf 序列化 → 加 5 字节头 → 封装为 HTTP/2 DATA 帧发回客户端。
     3. 关键补充 (Trailers) : 服务端最后还会发一个带有 END_STREAM 标记的 HEADERS 帧(称为 Trailers), 携带 grpc-status: 0（表示成功, 非 0 则包含错误码和错误信息）和 grpc-message，正式关闭该 Stream。
     4. 客户端解包得到 resp，业务调用完成。
 
