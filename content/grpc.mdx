@@ -163,10 +163,10 @@ GET /user HTTP/1.1...POST /order HTTP/1.1...{"id":1}200 OK...
         - 读取长度为 3 字节
         - 精确截取后 3 字节 (08 E9 07)
 
-    3. Protobuf 反序列化： 将 08 E9 07 还原为内存中的 UserRequest{UserId: 1001} 强类型对象。
+    3. Protobuf 反序列化： 将 08 E9 07 还原为内存中的 `UserRequest{UserId: 1001}` 强类型对象。
 7. 执行业务并返回响应
     1. 服务端执行 GetUser 函数，从数据库查出用户名字 Alice。
-    2. 将 UserResponse{Name: "Alice"} 同样经过 Protobuf 序列化 $\rightarrow$ 加 5 字节头 $\rightarrow$ 封装为 HTTP/2 DATA 帧发回客户端。
+    2. 将 `UserResponse{Name: "Alice"}` 同样经过 Protobuf 序列化 $\rightarrow$ 加 5 字节头 $\rightarrow$ 封装为 HTTP/2 DATA 帧发回客户端。
     3. 关键补充 (Trailers) : 服务端最后还会发一个带有 END_STREAM 标记的 HEADERS 帧(称为 Trailers), 携带 grpc-status: 0（表示成功, 非 0 则包含错误码和错误信息）和 grpc-message，正式关闭该 Stream。
     4. 客户端解包得到 resp，业务调用完成。
 
