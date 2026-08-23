@@ -5,7 +5,7 @@ updatedAt: "2026-08-23"
 author: "Ronyu Kuang"
 summary: "记录学习grpc的文章,并整理一些问题"
 ---
-#GRPC
+# GRPC
 
 ## rpc是什么?
 
@@ -18,7 +18,7 @@ RPC(Remote Procedure Call)远程过程调用, 一种常见的计算机通信协�
 | 二进制居多（Protobuf、Thrift）体积小、解析极快 | 文本格式居多（JSON、XML）可读性好但体积偏大 | 
 | 微服务内部高性能通信、低延迟分布式系统  | 对外开放 API、前端与后端交互、第三方平台对接 | 
 
-###常见 RPC 框架
+### 常见 RPC 框架
 
 - gRPC: 基于 HTTP/2 和 Protocol Buffers，跨语言支持极佳, 目前工业界最主流
 - Apache Thrift: Facebook 开发的高性能跨语言 RPC 框架
@@ -131,11 +131,13 @@ GET /user HTTP/1.1...POST /order HTTP/1.1...{"id":1}200 OK...
         - 08: 字段编号 1 与 WireType 类型
         - E9 07：数字 1001 的 Varint 编码
 3. gRPC 协议层封装: gRPC 会在 Protobuf 载荷前加上一个 固定的 5 字节前缀
+
 | Field | Value |
 | :--- | :--- |
 | **Compressed (1B)** | `0x00` |
 | **Message Length (4B)** | `0x00 0x00 0x00 0x03` |
 | **Protobuf Payload (3B)** | `0x08 0xE9 0x07` |
+
     - 第 1 字节 (0x00): 表示未启用 Gzip/Snappy 压缩
     - 第 2~5 字节 (0x00 00 00 03) : 标记后面的 Protobuf 数据正好是 3 字节, 此时数据总长：5 + 3 = 8 字节
 4. HTTP/2 分帧与封装: gRPC 将上述 8 字节数据打包进 HTTP/2 标准帧中，并分配一个新的 Stream ID = 1
