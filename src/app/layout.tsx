@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { FlickeringGrid } from "@/components/magicui/flickering-grid";
+import { FloatingPixelPals } from "@/components/pixel/floating-pixel-pals";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -87,6 +88,7 @@ export default function RootLayout({
               {children}
             </div>
             <Navbar />
+            <FloatingPixelPals />
           </TooltipProvider>
         </ThemeProvider>
       </body>

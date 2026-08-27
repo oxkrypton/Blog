@@ -6,10 +6,10 @@ import { Python } from "@/components/ui/svgs/python";
 import { Docker } from "@/components/ui/svgs/docker";
 import { Kubernetes } from "@/components/ui/svgs/kubernetes";
 import { Redis } from "@/components/ui/svgs/redis";
-import {Git} from "@/components/ui/svgs/git";
+import { Git } from "@/components/ui/svgs/git";
 
 export const DATA = {
-  name: "Ronyu 👋",
+  name: "Ronyu",
   initials: "RY",
   url: "https://ronyu.me",
   description:
@@ -94,7 +94,7 @@ export const DATA = {
       href: "https://walottery.wal",
       dates: "April 2025 - September 2025",
       active: true,
-      description:"一个链上实物抽奖平台, 到期随机开奖, 使用 Seal 链上加密技术加密中奖者信息, 只有创建方可以解密查看信息",
+      description: "一个链上实物抽奖平台, 到期随机开奖, 使用 Seal 链上加密技术加密中奖者信息, 只有创建方可以解密查看信息",
       technologies: [
         "React",
         "Typescript",
