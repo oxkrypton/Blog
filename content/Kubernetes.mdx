@@ -62,15 +62,15 @@ status: {}
 
 ## 容器基础
 
-**容器本质上就是一个被 Linux Namespace 隔离了视图、被 Cgroups 限制了资源、基于联合文件系统（rootfs）运行的普通宿主机进程。** 
+**容器本质上就是一个被 Linux Namespace 隔离了视图、被 Cgroups 限制了资源、基于联合文件系统（rootfs）运行的普通宿主机进程** 
 所谓的“进入容器”或“容器间互通”，底层均是对内核 Namespace 归属的动态调整与共享
 
 ### 底层核心
 
-1. **Cgroups（Control Groups，控制组）** : Linux 内核提供的物理资源配额与度量机制。
-	- **作用：** 给进程的资源使用画“边界”，限制其能够占用的 CPU 算力、内存大小、磁盘 I/O 和网络带宽等，防止单个容器吃光宿主机资源。
+1. **Cgroups（Control Groups，控制组）** : Linux 内核提供的物理资源配额与度量机制
+	- **作用：** 给进程的资源使用画“边界”，限制其能够占用的 CPU 算力、内存大小、磁盘 I/O 和网络带宽等，防止单个容器吃光宿主机资源
 
-2. **Namespace（命名空间）**: Linux 内核提供的资源隔离机制。
+2. **Namespace（命名空间）**: Linux 内核提供的资源隔离机制
 	作用： 为进程制造“障眼法”，让进程误以为自己独占了系统的某种全局资源（如进程 PID、网络栈、挂载点等）	
 	- **Mount Namespace（挂载命名空间）**
 	    - **含义：** Linux 实现的第一个 Namespace 类型（标志位为 `CLONE_NEWNS`）。
@@ -80,6 +80,9 @@ status: {}
 	- **UTS Namespace**：隔离**主机名**。
 	- **IPC Namespace**：隔离**进程间通信**（共享内存、信号量）。
 	- **User Namespace**：隔离**用户与用户组 ID**。
+
+3.**UnionFS（Union File System，联合文件系统）**: Linux 下一种分层、轻量级且高性能的文件系统技术
+    作用:  为进程提供“分层合并视图”，将多个目录叠加挂载到同一目录下，对外呈现为一个统一的文件系统。
 
 ### 目录切换的系统调用/命令
 
@@ -95,7 +98,7 @@ status: {}
     - **实现原理:**  镜像分层与合并(OverlayFS / UnionFS) -> 挂载隔离(Mount Namespace) -> 视图切换(pivot_root / chroot) 
         
 - **UnionFS（Union File System，联合文件系统）**
-    - **含义：** 一种为 Linux 设计的分层、轻量级的高性能文件系统。一类技术的统称（也是早期Docker的一个具体实现）
+    - **含义：** 一种为 Linux 设计的分层、轻量级的高性能文件系统。一类技术的统称
     - **作用：** 支持将不同物理路径下的多个目录内容“联合挂载（Union Mount）”到同一个挂载点下，呈现为一个统一合并后的目录视图。
 
 - **AuFS（Advanced UnionFS）**
