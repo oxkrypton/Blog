@@ -33,6 +33,52 @@ kubectl get node
 - scheduler通过apiserver得到当前的节点状态，调度Pod，然后apiserver下发命令给某个Node的kubelet，kubelet调用container-runtime启动容器。
 - controller-manager也通过apiserver得到实时的节点状态，监控可能的异常情况，再使用相应的手段去调节恢复。
 
+## Pod
+
+### Namespace 做隔离，Cgroups 做限制，rootfs 做文件系统，为什么 Kubernetes 还要引入 Pod？
+
+**容器的本质是进程，容器镜像像是 `.exe` 安装包，而 Kubernetes 像是操作系统。**
+
+我们可以从操作系统的视角来理解 Pod 的作用。
+
+Linux 中的进程可以通过进程组组织起来。Borg 的开发实践也发现，许多应用由关系紧密、需要协同工作的多个进程组成，这些进程通常需要部署在同一台机器上。如果没有“组”的概念，这类应用的部署和运维就会比较困难。
+
+例如，一个 Go 微服务节点可能由日志采集器、Nginx 网关和 Go 主进程组成。这些进程可能依赖本地文件或通过 `localhost` 通信，因此需要部署在同一台机器上，也就是同一个 Pod 中。
+
+假设集群中有一个可用内存为 2.5 GB 的节点：
+
+1. 使用 Docker Swarm 时，可以给其他容器设置 `affinity=main`，要求它们与 `main` 容器运行在同一台机器上。若 `main` 和 `nginx` 先被调度并占用 2 GB 内存，之后调度 `prometheus` 时就可能因剩余内存不足而失败。
+2. Mesos 提供了资源囤积（resource hoarding）机制：等所有设置了 Affinity 约束的任务都到齐后，再统一调度。但资源囤积会降低调度效率，也可能导致死锁。
+3. 在 Kubernetes 中，Pod 是原子调度单位。调度器会根据 Pod 中所有容器的资源需求统一计算，再选择满足条件的节点，而不是先后独立地调度每个容器。
+
+### Pod 是逻辑概念，而不是独立的隔离环境
+
+Kubernetes 实际使用的仍是宿主机操作系统提供的 Linux Namespace 和 Cgroups，并不存在一个独立的“Pod 隔离环境”。
+
+Pod 可以理解为一组共享特定资源的容器：Pod 中的容器共享同一个 Network Namespace，也可以声明共享 Volume。
+
+如果让一个容器直接共享另一个容器的网络和 Volume，例如：
+
+```sh
+docker run --net=B --volumes-from=B --name=A image-A
+```
+
+那么容器 B 必须先于容器 A 启动，容器之间便形成了启动顺序上的依赖关系，不再是对等关系。
+
+因此，Kubernetes 使用一个中间容器来承载 Pod 级别的共享资源，这个容器称为 Infra 容器。Infra 容器先于 Pod 中的其他容器创建，其他容器通过加入它的 Network Namespace 来共享网络。
+
+这意味着，同一个 Pod 中的容器：
+
+- 可以直接通过 `localhost` 相互通信；
+- 看到相同的网络设备；
+- 共享同一个 Pod IP 地址；
+- 共享 Pod 层级声明的网络资源；
+- 不依赖某个普通业务容器来维持共享网络环境。
+
+同一 Pod 中的用户容器，其进出流量都使用 Pod 的网络配置。因此，开发 Kubernetes 网络插件时，需要关注如何配置 Pod 的 Network Namespace，而不是分别配置每个用户容器的网络。
+
+共享 Volume 的方式也类似：Kubernetes 在 Pod 层级定义 Volume，再由 Pod 中的容器挂载使用。
+
 ## YAML
 ```shell
 kubectl run ngx -image=nginx:alpine --dry-run=client -o yaml
