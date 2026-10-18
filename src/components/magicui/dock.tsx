@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { LiquidGlassSurface } from "@/components/ui/liquid-glass-surface";
 import { motion, type MotionValue, useMotionValue, useSpring, useTransform } from "motion/react";
 import { createContext, useContext, useRef, type ReactNode } from "react";
 
@@ -41,6 +42,7 @@ const Dock = ({ className, children, magnification = DEFAULT_MAGNIFICATION, dist
         onMouseLeave={() => mouseX.set(Infinity)}
         className={cn("mx-auto w-max h-full flex items-end justify-center overflow-visible rounded-full border", className)}
       >
+        <LiquidGlassSurface variant="dock" />
         {children}
       </motion.div>
     </DockContext.Provider>
@@ -77,9 +79,10 @@ const DockIcon = ({ className, children }: DockIconProps) => {
       style={{ width: containerSize, height: containerSize }}
       className={cn("relative flex aspect-square items-center justify-center rounded-full shrink-0", className)}
     >
+      <LiquidGlassSurface variant="button" />
       <motion.div
         style={{ width: iconSize, height: iconSize }}
-        className="flex items-center justify-center"
+        className="relative z-10 flex items-center justify-center"
       >
         {children}
       </motion.div>

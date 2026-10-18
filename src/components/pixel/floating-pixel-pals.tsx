@@ -1,15 +1,39 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { PixelSpriteRenderer } from "./pixel-sprite-renderer";
 import { PixelTypingEffect } from "./pixel-typing-effect";
 
 const PHRASES = ["hello world"];
+const PETS_MEDIA_QUERY = "(min-width: 1120px) and (min-height: 600px)";
+
+function subscribeToViewport(onChange: () => void) {
+  const media = window.matchMedia(PETS_MEDIA_QUERY);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
+function hasRoomForPets() {
+  return window.matchMedia(PETS_MEDIA_QUERY).matches;
+}
+
+function hidePetsUntilViewportIsKnown() {
+  return false;
+}
 
 /**
  * A self-contained fixed overlay. It is outside the normal document flow,
  * so it cannot affect any page layout, scrolling, or existing styles.
  */
 export function FloatingPixelPals() {
+  const visible = useSyncExternalStore(
+    subscribeToViewport,
+    hasRoomForPets,
+    hidePetsUntilViewportIsKnown,
+  );
+
+  if (!visible) return null;
+
   return (
     <div
       aria-hidden="true"
