@@ -5,6 +5,7 @@ import { DATA } from "@/data/resume";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { FlickeringGrid } from "@/components/magicui/flickering-grid";
 import { FloatingPixelPals } from "@/components/pixel/floating-pixel-pals";
@@ -91,6 +92,11 @@ export default function RootLayout({
             <FloatingPixelPals />
           </TooltipProvider>
         </ThemeProvider>
+        <Script
+          src="https://cloud.umami.is/script.js"
+          data-website-id="cad6953a-355e-471b-8a00-90927ed3a13c"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
